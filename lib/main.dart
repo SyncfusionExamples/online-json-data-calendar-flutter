@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 void main() => runApp(new JsonData());
@@ -11,7 +10,6 @@ void main() => runApp(new JsonData());
 class JsonData extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: OnlineJsonData(),
@@ -21,59 +19,39 @@ class JsonData extends StatelessWidget {
 
 class OnlineJsonData extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() => ScheduleExample();
+  State<StatefulWidget> createState() => CalendarExample();
 }
 
-class ScheduleExample extends State<OnlineJsonData> {
-  Future<List<OnlineAppointmentData>> _getOnlineData() async {
-    var data = await http.get(
-        "https://js.syncfusion.com/demos/ejservices/api/Schedule/LoadData");
-    var jsonData = json.decode(data.body);
-    List<OnlineAppointmentData> appointmentData = [];
-    for (var u in jsonData) {
-      OnlineAppointmentData user = OnlineAppointmentData(
-          u['StartTime'], u['EndTime'], u['Subject'], u['AllDay']);
-      appointmentData.add(user);
-    }
-    print(appointmentData.length);
-    return appointmentData;
+class CalendarExample extends State<OnlineJsonData> {
+  List<Color> _colorCollection;
+
+  @override
+  void initState() {
+    _initializeEventColor();
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return new Scaffold(
       body: Container(
         child: FutureBuilder(
-          future: _getOnlineData(),
+          future: getDataFromWeb(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
             if (snapshot.data != null) {
-              List<Meeting> collection;
-              if (snapshot.data != null) {
-                for (int i = 0; i < snapshot.data.length; i++) {
-                  collection ??= <Meeting>[];
-                  var meeting= snapshot.data[i];
-                  collection.add(
-                    Meeting(
-                        eventName: meeting.subject,
-                        from: convertDateFromString(meeting.startTime),
-                        to: convertDateFromString(meeting.endTime),
-                        background: Colors.red,
-                        allDay: meeting.allDay),
-                  );
-                }
-              }
-              return Container(
-                  child: SfCalendar(
-                    view: CalendarView.month,
-                    initialDisplayDate: DateTime(2017, 6, 23, 9, 0, 0),
-                    monthViewSettings: MonthViewSettings(showAgenda: true),
-                    dataSource: _getCalendarDataSource(collection),
-                  ));
+              return SafeArea(
+                child: Container(
+                    child: SfCalendar(
+                  view: CalendarView.week,
+                  initialDisplayDate: DateTime(2017, 6, 01, 9, 0, 0),
+                  monthViewSettings: MonthViewSettings(showAgenda: true),
+                  dataSource: _getCalendarDataSource(snapshot.data),
+                )),
+              );
             } else {
               return Container(
                 child: Center(
-                  child: Text('loading...'),
+                  child: Text('Calendar data loading...'),
                 ),
               );
             }
@@ -83,25 +61,48 @@ class ScheduleExample extends State<OnlineJsonData> {
     );
   }
 
-  DateTime convertDateFromString(String date) {
-    DateTime todayDate = DateTime.parse(date);
-    return todayDate;
+  Future<List<Meeting>> getDataFromWeb() async {
+    var data = await http.get(
+        "https://js.syncfusion.com/demos/ejservices/api/Schedule/LoadData");
+    var jsonData = json.decode(data.body);
+
+    final List<Meeting> appointmentData = [];
+    final Random random = new Random();
+    for (var data in jsonData) {
+      Meeting meetingData = Meeting(
+          eventName: data['Subject'],
+          from: _convertDateFromString(
+            data['StartTime'],
+          ),
+          to: _convertDateFromString(data['EndTime']),
+          background: _colorCollection[random.nextInt(9)],
+          allDay: data['AllDay']);
+      appointmentData.add(meetingData);
+    }
+    return appointmentData;
+  }
+
+  DateTime _convertDateFromString(String date) {
+    return DateTime.parse(date);
+  }
+
+  void _initializeEventColor() {
+    this._colorCollection = new List<Color>();
+    _colorCollection.add(const Color(0xFF0F8644));
+    _colorCollection.add(const Color(0xFF8B1FA9));
+    _colorCollection.add(const Color(0xFFD20100));
+    _colorCollection.add(const Color(0xFFFC571D));
+    _colorCollection.add(const Color(0xFF36B37B));
+    _colorCollection.add(const Color(0xFF01A1EF));
+    _colorCollection.add(const Color(0xFF3D4FB5));
+    _colorCollection.add(const Color(0xFFE47C73));
+    _colorCollection.add(const Color(0xFF636363));
+    _colorCollection.add(const Color(0xFF0A8043));
   }
 }
 
-class OnlineAppointmentData {
-  String startTime;
-  String endTime;
-  String subject;
-  bool allDay;
-
-  OnlineAppointmentData(
-      this.startTime, this.endTime, this.subject, this.allDay);
-}
-
 MeetingDataSource _getCalendarDataSource([List<Meeting> collection]) {
-  List<Meeting> meetings = collection ?? <Meeting>[];
-  return MeetingDataSource(meetings);
+  return MeetingDataSource(collection ?? <Meeting>[]);
 }
 
 class MeetingDataSource extends CalendarDataSource {
