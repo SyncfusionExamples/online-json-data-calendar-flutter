@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:connectivity/connectivity.dart';
 
 void main() => runApp(new JsonData());
 
@@ -24,10 +25,13 @@ class OnlineJsonData extends StatefulWidget {
 
 class CalendarExample extends State<OnlineJsonData> {
   List<Color> _colorCollection;
+  String _networkStatusMsg;
+  final Connectivity _internetConnectivity = new Connectivity();
 
   @override
   void initState() {
     _initializeEventColor();
+    _checkNetworkStatus();
     super.initState();
   }
 
@@ -44,14 +48,13 @@ class CalendarExample extends State<OnlineJsonData> {
                     child: SfCalendar(
                   view: CalendarView.week,
                   initialDisplayDate: DateTime(2017, 6, 01, 9, 0, 0),
-                  monthViewSettings: MonthViewSettings(showAgenda: true),
-                  dataSource: _getCalendarDataSource(snapshot.data),
+                  dataSource: MeetingDataSource(snapshot.data),
                 )),
               );
             } else {
               return Container(
                 child: Center(
-                  child: Text('Calendar data loading...'),
+                  child: Text('$_networkStatusMsg'),
                 ),
               );
             }
@@ -99,10 +102,25 @@ class CalendarExample extends State<OnlineJsonData> {
     _colorCollection.add(const Color(0xFF636363));
     _colorCollection.add(const Color(0xFF0A8043));
   }
-}
 
-MeetingDataSource _getCalendarDataSource([List<Meeting> collection]) {
-  return MeetingDataSource(collection ?? <Meeting>[]);
+  void _checkNetworkStatus() {
+    _internetConnectivity.onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      setState(() {
+        _networkStatusMsg = result.toString();
+        if (_networkStatusMsg == "ConnectivityResult.mobile") {
+          _networkStatusMsg =
+              "You are connected to mobile network, loading calendar data ....";
+        } else if (_networkStatusMsg == "ConnectivityResult.wifi") {
+          _networkStatusMsg =
+              "You are connected to wifi network, loading calendar data ....";
+        } else {
+          _networkStatusMsg =
+              "Internet connection may not be available. Connect to another network";
+        }
+      });
+    });
+  }
 }
 
 class MeetingDataSource extends CalendarDataSource {
