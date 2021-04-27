@@ -24,8 +24,8 @@ class OnlineJsonData extends StatefulWidget {
 }
 
 class CalendarExample extends State<OnlineJsonData> {
-  List<Color> _colorCollection;
-  String _networkStatusMsg;
+  List<Color> _colorCollection=<Color>[];
+  String? _networkStatusMsg;
   final Connectivity _internetConnectivity = new Connectivity();
 
   @override
@@ -46,10 +46,10 @@ class CalendarExample extends State<OnlineJsonData> {
               return SafeArea(
                 child: Container(
                     child: SfCalendar(
-                  view: CalendarView.week,
-                  initialDisplayDate: DateTime(2017, 6, 01, 9, 0, 0),
-                  dataSource: MeetingDataSource(snapshot.data),
-                )),
+                      view: CalendarView.week,
+                      initialDisplayDate: DateTime(2017, 6, 01, 9, 0, 0),
+                      dataSource: MeetingDataSource(snapshot.data),
+                    )),
               );
             } else {
               return Container(
@@ -65,8 +65,7 @@ class CalendarExample extends State<OnlineJsonData> {
   }
 
   Future<List<Meeting>> getDataFromWeb() async {
-    var data = await http.get(
-        "https://js.syncfusion.com/demos/ejservices/api/Schedule/LoadData");
+    var data = await http.get(Uri.parse("https://js.syncfusion.com/demos/ejservices/api/Schedule/LoadData"));
     var jsonData = json.decode(data.body);
 
     final List<Meeting> appointmentData = [];
@@ -85,12 +84,12 @@ class CalendarExample extends State<OnlineJsonData> {
     return appointmentData;
   }
 
+
   DateTime _convertDateFromString(String date) {
     return DateTime.parse(date);
   }
 
   void _initializeEventColor() {
-    this._colorCollection = new List<Color>();
     _colorCollection.add(const Color(0xFF0F8644));
     _colorCollection.add(const Color(0xFF8B1FA9));
     _colorCollection.add(const Color(0xFFD20100));
@@ -110,13 +109,13 @@ class CalendarExample extends State<OnlineJsonData> {
         _networkStatusMsg = result.toString();
         if (_networkStatusMsg == "ConnectivityResult.mobile") {
           _networkStatusMsg =
-              "You are connected to mobile network, loading calendar data ....";
+          "You are connected to mobile network, loading calendar data ....";
         } else if (_networkStatusMsg == "ConnectivityResult.wifi") {
           _networkStatusMsg =
-              "You are connected to wifi network, loading calendar data ....";
+          "You are connected to wifi network, loading calendar data ....";
         } else {
           _networkStatusMsg =
-              "Internet connection may not be available. Connect to another network";
+          "Internet connection may not be available. Connect to another network";
         }
       });
     });
@@ -130,41 +129,41 @@ class MeetingDataSource extends CalendarDataSource {
 
   @override
   DateTime getStartTime(int index) {
-    return appointments[index].from;
+    return appointments![index].from;
   }
 
   @override
   DateTime getEndTime(int index) {
-    return appointments[index].to;
+    return appointments![index].to;
   }
 
   @override
   String getSubject(int index) {
-    return appointments[index].eventName;
+    return appointments![index].eventName;
   }
 
   @override
   Color getColor(int index) {
-    return appointments[index].background;
+    return appointments![index].background;
   }
 
   @override
   bool isAllDay(int index) {
-    return appointments[index].allDay;
+    return appointments![index].allDay;
   }
 }
 
 class Meeting {
   Meeting(
       {this.eventName,
-      this.from,
-      this.to,
-      this.background,
-      this.allDay = false});
+        this.from,
+        this.to,
+        this.background,
+        this.allDay = false});
 
-  String eventName;
-  DateTime from;
-  DateTime to;
-  Color background;
-  bool allDay;
+  String? eventName;
+  DateTime? from;
+  DateTime? to;
+  Color? background;
+  bool? allDay;
 }
